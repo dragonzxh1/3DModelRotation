@@ -165,6 +165,26 @@ sceneManager.adjustCameraDistance(-1); // 拉近1个单位
 
 ### 方法
 
+#### `createRoundedCornerMask(cornerRadius)`
+
+创建圆角遮罩纹理，用于避免矩形图片在圆角模型上露出黑边。
+
+**参数**:
+- `cornerRadius` (number, 可选) - 圆角半径（0-0.5之间），默认0.08
+
+**返回值**: `THREE.CanvasTexture`
+
+**示例**:
+```javascript
+const alphaMask = modelManager.createRoundedCornerMask(0.03);
+```
+
+**说明**:
+- 此遮罩会应用到材质的 `alphaMap` 属性
+- 较小的值（如0.03）产生较小的圆角，适合精细模型
+- 较大的值（如0.08）产生更明显的圆角效果
+- 自动应用于 `createTexturedCard()` 创建的材质
+
 #### `createTexture(imageData, rotation, flipY, flipX)`
 
 创建Three.js纹理。
@@ -210,6 +230,11 @@ await modelManager.createTexturedCard(
     null
 );
 ```
+
+**技术说明**:
+- 自动应用 **圆角遮罩**（cornerRadius = 0.03）解决图片黑边问题
+- 遮罩通过 `alphaMap` 实现，使矩形图片完美贴合圆角3D模型
+- 材质配置包括金属度（0.15）和粗糙度（0.7）优化
 
 #### `getCube()`
 
@@ -545,6 +570,24 @@ async function createCardSafely(frontData, backData) {
 }
 ```
 
+### 示例5: 自定义圆角遮罩
+
+如果需要调整圆角大小，可以修改 `model.js` 中的圆角半径：
+
+```javascript
+// 在 model.js 的 createTexturedCard() 方法中
+const alphaMask = this.createRoundedCornerMask(0.03);  // 调整这个值
+
+// 0.03 - 小圆角（推荐，适合精细模型）
+// 0.05 - 中等圆角
+// 0.08 - 大圆角（默认值）
+```
+
+**效果对比**:
+- **0.03**: 最小圆角，最大限度保留图片内容，适合圆角较小的3D模型
+- **0.08**: 较大圆角，更安全但会裁切更多图片边缘
+- **0.00**: 无圆角（不推荐），会在圆角模型上产生黑边
+
 ---
 
 ## 常见问题
@@ -584,6 +627,29 @@ await app.getUploadManager().createCard({
 });
 ```
 
+### Q5: 为什么图片贴到3D模型上有黑边？
+
+这是因为矩形图片贴到圆角3D模型上时，四角会露出模型的黑色背景。项目已经通过 **Alpha遮罩技术** 解决了这个问题：
+
+- 自动应用圆角遮罩（默认 cornerRadius = 0.03）
+- 遮罩使图片边缘透明化，完美贴合圆角模型
+- 无需手动处理，`createTexturedCard()` 会自动应用
+
+如果仍有黑边，可以增大圆角半径值（如从 0.03 改为 0.05）。
+
+### Q6: 如何调整圆角遮罩的大小？
+
+在 `model.js` 的 `createTexturedCard()` 方法中修改：
+
+```javascript
+const alphaMask = this.createRoundedCornerMask(0.05);  // 从0.03改为0.05
+```
+
+**建议值**:
+- **0.03** - 适合圆角较小的模型（当前默认）
+- **0.05** - 适合中等圆角的模型
+- **0.08** - 适合大圆角的模型
+
 ---
 
 ## 版本信息
@@ -591,6 +657,14 @@ await app.getUploadManager().createCard({
 - **当前版本**: 1.0.0
 - **Three.js版本**: 0.128.0
 - **最后更新**: 2025-10
+
+### 关键特性
+
+✅ **Alpha遮罩技术** - 解决圆角模型上的图片黑边问题  
+✅ **自适应圆角** - 可调节圆角半径（0.03 默认，适合精细模型）  
+✅ **模块化架构** - 清晰的代码组织和API设计  
+✅ **完整的3D控制** - 自动/手动旋转、相机距离调节  
+✅ **自定义模型支持** - 可加载GLB/GLTF格式的3D模型
 
 
 
