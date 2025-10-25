@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模块加载测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-result {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .info {
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 模块加载测试</h1>
+    <div id="results"></div>
+
+    <script type="module">
+        const results = document.getElementById('results');
+
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = 'test-result';
+            div.innerHTML = `<span class="${type}">${type.toUpperCase()}:</span> ${message}`;
+            results.appendChild(div);
+        }
+
+        async function testModules() {
+            try {
+                // 测试 1: Three.js CDN
+                addResult('正在测试 Three.js CDN...', 'info');
+                const THREE = await import('https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.module.js');
+                addResult('✅ Three.js 加载成功！版本: ' + (THREE.REVISION || 'unknown'), 'success');
+
+                // 测试 2: GLTFLoader
+                addResult('正在测试 GLTFLoader...', 'info');
+                const { GLTFLoader } = await import('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/loaders/GLTFLoader.js');
+                addResult('✅ GLTFLoader 加载成功！', 'success');
+
+                // 测试 3: utils.js
+                addResult('正在测试 utils.js...', 'info');
+                const utils = await import('../utils.js');
+                addResult('✅ utils.js 加载成功！导出函数: ' + Object.keys(utils).join(', '), 'success');
+
+                // 测试 4: renderer.js
+                addResult('正在测试 renderer.js...', 'info');
+                const renderer = await import('../renderer.js');
+                addResult('✅ renderer.js 加载成功！', 'success');
+
+                // 测试 5: camera.js
+                addResult('正在测试 camera.js...', 'info');
+                const camera = await import('../camera.js');
+                addResult('✅ camera.js 加载成功！', 'success');
+
+                // 测试 6: lighting.js
+                addResult('正在测试 lighting.js...', 'info');
+                const lighting = await import('../lighting.js');
+                addResult('✅ lighting.js 加载成功！', 'success');
+
+                // 测试 7: scene.js
+                addResult('正在测试 scene.js...', 'info');
+                const scene = await import('../scene.js');
+                addResult('✅ scene.js 加载成功！', 'success');
+
+                // 测试 8: model.js
+                addResult('正在测试 model.js...', 'info');
+                const model = await import('../model.js');
+                addResult('✅ model.js 加载成功！', 'success');
+
+                // 测试 9: upload.js
+                addResult('正在测试 upload.js...', 'info');
+                const upload = await import('../upload.js');
+                addResult('✅ upload.js 加载成功！', 'success');
+
+                // 测试 10: controls.js
+                addResult('正在测试 controls.js...', 'info');
+                const controls = await import('../controls.js');
+                addResult('✅ controls.js 加载成功！', 'success');
+
+                // 测试 11: main.js
+                addResult('正在测试 main.js...', 'info');
+                const main = await import('../main.js');
+                addResult('✅ main.js 加载成功！', 'success');
+
+                addResult('🎉 所有模块加载成功！您可以安全地使用 index.html', 'success');
+
+            } catch (error) {
+                addResult('❌ 模块加载失败: ' + error.message, 'error');
+                console.error('详细错误信息:', error);
+            }
+        }
+
+        testModules();
+    </script>
+</body>
+</html>
+
+
+
+

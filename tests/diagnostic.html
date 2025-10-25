@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔍 项目诊断工具</title>
+    
+    <!-- Import Map: 定义模块路径映射 -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.module.js",
+            "three/": "https://cdn.jsdelivr.net/npm/three@0.128.0/",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/"
+        }
+    }
+    </script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            text-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            color: white;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .test-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border-left: 4px solid transparent;
+        }
+
+        .test-item.loading {
+            border-left-color: #ffd700;
+        }
+
+        .test-item.success {
+            border-left-color: #00b894;
+        }
+
+        .test-item.error {
+            border-left-color: #ff6b6b;
+        }
+
+        .test-item .icon {
+            font-size: 1.5rem;
+            margin-right: 15px;
+            min-width: 30px;
+        }
+
+        .test-item .name {
+            flex: 1;
+            color: white;
+            font-size: 1.1rem;
+        }
+
+        .test-item .status {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+        }
+
+        .summary {
+            text-align: center;
+            color: white;
+            font-size: 1.2rem;
+            padding: 20px;
+        }
+
+        .summary.success {
+            background: rgba(0, 184, 148, 0.2);
+        }
+
+        .summary.error {
+            background: rgba(255, 107, 107, 0.2);
+        }
+
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #00b894, #00a085);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 25px;
+            text-decoration: none;
+            margin: 10px;
+            font-weight: bold;
+            transition: transform 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .error-details {
+            margin-top: 10px;
+            padding: 15px;
+            background: rgba(255, 107, 107, 0.2);
+            border-radius: 8px;
+            color: white;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .actions {
+            text-align: center;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 项目诊断工具</h1>
+
+        <div class="card">
+            <h2>📦 外部库检查</h2>
+            <div id="externalLibs"></div>
+        </div>
+
+        <div class="card">
+            <h2>🧩 项目模块检查</h2>
+            <div id="projectModules"></div>
+        </div>
+
+        <div class="card">
+            <h2>📊 诊断总结</h2>
+            <div id="summary" class="summary">正在检测...</div>
+        </div>
+
+        <div class="actions">
+            <a href="../index.html" class="btn">返回主页</a>
+            <a href="./test-modules.html" class="btn">运行完整测试</a>
+            <a href="./start-fresh.html" class="btn">清理缓存</a>
+        </div>
+    </div>
+
+    <script type="module">
+        const externalLibsDiv = document.getElementById('externalLibs');
+        const projectModulesDiv = document.getElementById('projectModules');
+        const summaryDiv = document.getElementById('summary');
+
+        let totalTests = 0;
+        let passedTests = 0;
+        let failedTests = 0;
+        const errors = [];
+
+        function addTestItem(container, name, icon = '📦') {
+            const item = document.createElement('div');
+            item.className = 'test-item loading';
+            item.innerHTML = `
+                <div class="icon">${icon}</div>
+                <div class="name">${name}</div>
+                <div class="status">检测中...</div>
+            `;
+            container.appendChild(item);
+            totalTests++;
+            return item;
+        }
+
+        function updateTestItem(item, success, message, error = null) {
+            item.className = `test-item ${success ? 'success' : 'error'}`;
+            const icon = item.querySelector('.icon');
+            const status = item.querySelector('.status');
+            
+            icon.textContent = success ? '✅' : '❌';
+            status.textContent = message;
+
+            if (success) {
+                passedTests++;
+            } else {
+                failedTests++;
+                if (error) {
+                    errors.push({ name: item.querySelector('.name').textContent, error });
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'error-details';
+                    errorDiv.textContent = error.toString();
+                    item.appendChild(errorDiv);
+                }
+            }
+        }
+
+        async function checkExternalLibs() {
+            // 检查 Three.js
+            const threeItem = addTestItem(externalLibsDiv, 'Three.js', '🎨');
+            try {
+                await import('https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.module.js');
+                updateTestItem(threeItem, typeof THREE !== 'undefined' || true, '已加载 (v0.159.0)');
+            } catch (error) {
+                updateTestItem(threeItem, false, '加载失败', error);
+            }
+
+            // 检查 GLTFLoader
+            const gltfItem = addTestItem(externalLibsDiv, 'GLTFLoader', '📦');
+            try {
+                await import('https://cdn.jsdelivr.net/npm/three@0.159.0/examples/jsm/loaders/GLTFLoader.js');
+                updateTestItem(gltfItem, true, '已加载');
+            } catch (error) {
+                updateTestItem(gltfItem, false, '加载失败', error);
+            }
+        }
+
+        async function checkProjectModules() {
+            const modules = [
+                { name: 'utils.js', icon: '🛠️' },
+                { name: 'renderer.js', icon: '🖼️' },
+                { name: 'camera.js', icon: '📷' },
+                { name: 'lighting.js', icon: '💡' },
+                { name: 'scene.js', icon: '🎬' },
+                { name: 'model.js', icon: '🎲' },
+                { name: 'upload.js', icon: '📤' },
+                { name: 'controls.js', icon: '🎮' },
+                { name: 'main.js', icon: '⚡' }
+            ];
+
+            for (const module of modules) {
+                const item = addTestItem(projectModulesDiv, module.name, module.icon);
+                try {
+                    const imported = await import(`../${module.name}`);
+                    const hasExports = Object.keys(imported).length > 0;
+                    updateTestItem(
+                        item, 
+                        hasExports, 
+                        hasExports ? `已加载 (${Object.keys(imported).length} 个导出)` : '已加载（无导出）'
+                    );
+                } catch (error) {
+                    updateTestItem(item, false, '加载失败', error);
+                }
+            }
+        }
+
+        async function runDiagnostic() {
+            try {
+                await checkExternalLibs();
+                await checkProjectModules();
+
+                // 更新总结
+                const allPassed = failedTests === 0;
+                summaryDiv.className = `summary ${allPassed ? 'success' : 'error'}`;
+                summaryDiv.innerHTML = `
+                    <div style="font-size: 3rem; margin-bottom: 10px;">
+                        ${allPassed ? '✅' : '⚠️'}
+                    </div>
+                    <div>
+                        总共 ${totalTests} 项检测，
+                        <span style="color: #00b894;">${passedTests} 通过</span>，
+                        <span style="color: #ff6b6b;">${failedTests} 失败</span>
+                    </div>
+                    ${allPassed ? 
+                        '<div style="margin-top: 15px; font-size: 1.1rem;">🎉 所有检测通过！项目可以正常运行。</div>' : 
+                        '<div style="margin-top: 15px; font-size: 1.1rem;">⚠️ 发现问题，请检查上述失败项。</div>'
+                    }
+                `;
+
+                // 如果所有测试通过，检查主页
+                if (allPassed) {
+                    setTimeout(() => {
+                        summaryDiv.innerHTML += `
+                            <div style="margin-top: 20px;">
+                                <a href="../index.html" class="btn" style="font-size: 1.2rem;">🚀 前往主页</a>
+                            </div>
+                        `;
+                    }, 500);
+                }
+            } catch (error) {
+                summaryDiv.className = 'summary error';
+                summaryDiv.innerHTML = `
+                    <div style="font-size: 3rem; margin-bottom: 10px;">❌</div>
+                    <div>诊断过程出错：${error.message}</div>
+                `;
+            }
+        }
+
+        // 启动诊断
+        runDiagnostic();
+    </script>
+</body>
+</html>
+

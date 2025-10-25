@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D立方体模型 - 图片贴图旋转</title>
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Import Map: 定义模块路径映射 -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.module.js",
+            "three/": "https://cdn.jsdelivr.net/npm/three@0.128.0/",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/"
+        }
+    }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>3D卡片翻转效果</h1>
+        <p class="description">上传您的图片，创建3D卡片模型。卡片会像真实卡片一样翻转，显示正面和背面。</p>
+        
+        <div class="main-content">
+            <!-- 上传区域 -->
+            <div class="upload-section">
+                <h2 class="upload-title">📸 上传图片创建3D卡片</h2>
+                <form class="upload-form" id="uploadForm">
+                    <div class="file-input-group">
+                        <label for="modelFile" class="file-label">
+                            <span class="file-icon">🎲</span>
+                            <span class="file-text">选择3D模型文件 (GLB/GLTF，可选)</span>
+                            <input type="file" id="modelFile" accept=".glb,.gltf" class="file-input">
+                        </label>
+                    </div>
+                    <div class="file-input-group">
+                        <label for="frontImage" class="file-label">
+                            <span class="file-icon">📷</span>
+                            <span class="file-text">选择正面图片</span>
+                            <input type="file" id="frontImage" accept="image/*" class="file-input">
+                        </label>
+                        <label for="backImage" class="file-label">
+                            <span class="file-icon">🖼️</span>
+                            <span class="file-text">选择背面图片</span>
+                            <input type="file" id="backImage" accept="image/*" class="file-input">
+                        </label>
+                    </div>
+                    <button type="submit" class="upload-btn" id="uploadBtn">创建3D卡片</button>
+                </form>
+                
+                <!-- 预览区域 -->
+                <div class="preview-section" id="previewSection">
+                    <div class="preview-images">
+                        <div>
+                            <div class="preview-label">正面预览</div>
+                            <div class="preview-image" id="frontPreview"></div>
+                        </div>
+                        <div>
+                            <div class="preview-label">背面预览</div>
+                            <div class="preview-image" id="backPreview"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 3D渲染区域 -->
+            <div class="canvas-container">
+                <canvas id="threeCanvas"></canvas>
+                <div class="controls">
+                    <button class="control-btn" id="autoRotateBtn">自动旋转</button>
+                    <button class="control-btn" id="manualRotateBtn">手动控制</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 使用说明 -->
+        <div class="instructions">
+            <p>💡 使用说明：上传正面和背面图片，点击"创建3D卡片"按钮生成3D卡片模型。卡片会像真实卡片一样翻转，使用控制按钮切换自动翻转或手动控制模式！</p>
+            <p>🖱️ 交互控制：鼠标移动控制卡片翻转，滚轮缩放控制远近（距离范围：2-20）</p>
+        </div>
+    </div>
+
+    <!-- 主入口脚本 -->
+    <script type="module" src="./main.js"></script>
+</body>
+</html>

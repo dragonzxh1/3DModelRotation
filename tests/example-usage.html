@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API使用示例</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .example-section {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .example-title {
+            color: white;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+        
+        .example-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .example-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .code-block {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>API使用示例</h1>
+        <p class="description">演示如何通过编程方式调用3D卡片API接口</p>
+        
+        <div class="main-content" style="grid-template-columns: 1fr;">
+            <!-- 示例1: 从URL创建卡片 -->
+            <div class="example-section">
+                <h2 class="example-title">示例1: 从图片URL创建3D卡片</h2>
+                <button class="example-btn" onclick="createCardFromURLs()">创建卡片（使用示例图片）</button>
+                <div class="code-block">
+async function createCardFromURLs() {<br>
+&nbsp;&nbsp;const frontURL = '../Relique_eInvite_FAOL.jpg';<br>
+&nbsp;&nbsp;const backURL = '../Relique_eInvite_FAOL.jpg';<br>
+&nbsp;&nbsp;const frontData = await urlToDataURL(frontURL);<br>
+&nbsp;&nbsp;const backData = await urlToDataURL(backURL);<br>
+&nbsp;&nbsp;await app.getUploadManager().createCard({<br>
+&nbsp;&nbsp;&nbsp;&nbsp;frontImageData: frontData,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;backImageData: backData<br>
+&nbsp;&nbsp;});<br>
+}
+                </div>
+            </div>
+            
+            <!-- 示例2: 控制旋转 -->
+            <div class="example-section">
+                <h2 class="example-title">示例2: 控制卡片旋转</h2>
+                <button class="example-btn" onclick="enableAutoRotate()">开启自动旋转</button>
+                <button class="example-btn" onclick="disableAutoRotate()">关闭自动旋转</button>
+                <button class="example-btn" onclick="rotateToAngle(0)">旋转到0°</button>
+                <button class="example-btn" onclick="rotateToAngle(90)">旋转到90°</button>
+                <button class="example-btn" onclick="rotateToAngle(180)">旋转到180°</button>
+                <div class="code-block">
+// 开启自动旋转<br>
+app.getControlsManager().setAutoRotate(true);<br>
+<br>
+// 关闭自动旋转<br>
+app.getControlsManager().setAutoRotate(false);<br>
+<br>
+// 旋转到指定角度<br>
+app.getModelManager().setRotation(Math.PI / 2); // 90度
+                </div>
+            </div>
+            
+            <!-- 示例3: 调整相机 -->
+            <div class="example-section">
+                <h2 class="example-title">示例3: 调整相机距离</h2>
+                <button class="example-btn" onclick="adjustCamera(-2)">拉近</button>
+                <button class="example-btn" onclick="adjustCamera(2)">拉远</button>
+                <button class="example-btn" onclick="resetCamera()">重置距离</button>
+                <div class="code-block">
+// 拉近相机<br>
+app.getSceneManager().adjustCameraDistance(-2);<br>
+<br>
+// 拉远相机<br>
+app.getSceneManager().adjustCameraDistance(2);<br>
+<br>
+// 重置到默认距离<br>
+const sceneManager = app.getSceneManager();<br>
+sceneManager.camera.position.z = 6;
+                </div>
+            </div>
+            
+            <!-- 示例4: 动画控制 -->
+            <div class="example-section">
+                <h2 class="example-title">示例4: 动画特效</h2>
+                <button class="example-btn" onclick="animateFlip()">翻转动画</button>
+                <button class="example-btn" onclick="animateSpin()">旋转一圈</button>
+                <button class="example-btn" onclick="animateZoom()">缩放动画</button>
+                <div class="code-block">
+// 翻转动画（0° → 180°）<br>
+async function animateFlip() {<br>
+&nbsp;&nbsp;app.getControlsManager().setAutoRotate(false);<br>
+&nbsp;&nbsp;const target = Math.PI;<br>
+&nbsp;&nbsp;let current = 0;<br>
+&nbsp;&nbsp;const step = Math.PI / 60;<br>
+&nbsp;&nbsp;const interval = setInterval(() => {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;current += step;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;app.getModelManager().setRotation(current);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if (current >= target) clearInterval(interval);<br>
+&nbsp;&nbsp;}, 16);<br>
+}
+                </div>
+            </div>
+            
+            <!-- 渲染区域 -->
+            <div class="canvas-container">
+                <canvas id="threeCanvas"></canvas>
+                <div class="controls">
+                    <button class="control-btn" id="autoRotateBtn">自动旋转</button>
+                    <button class="control-btn" id="manualRotateBtn">手动控制</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <p>💡 提示：点击上面的按钮查看各种API调用效果。所有功能都可以通过编程方式调用！</p>
+            <p>📖 完整API文档请查看 API.md 文件</p>
+        </div>
+    </div>
+
+    <!-- 主入口脚本 -->
+    <script type="module">
+        import app from '../main.js';
+        
+        // 工具函数：URL转DataURL
+        async function urlToDataURL(url) {
+            return fetch(url)
+                .then(response => response.blob())
+                .then(blob => new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                }));
+        }
+        
+        // ====== 示例函数 ======
+        
+        // 示例1: 从URL创建卡片
+        window.createCardFromURLs = async function() {
+            try {
+                const frontURL = '../Relique_eInvite_FAOL.jpg';
+                const backURL = '../Relique_eInvite_FAOL.jpg';
+                
+                const frontData = await urlToDataURL(frontURL);
+                const backData = await urlToDataURL(backURL);
+                
+                await app.getUploadManager().createCard({
+                    frontImageData: frontData,
+                    backImageData: backData
+                });
+                
+                alert('3D卡片创建成功！');
+            } catch (error) {
+                console.error('创建失败:', error);
+                alert('创建失败：' + error.message);
+            }
+        };
+        
+        // 示例2: 控制旋转
+        window.enableAutoRotate = function() {
+            app.getControlsManager().setAutoRotate(true);
+            alert('已开启自动旋转');
+        };
+        
+        window.disableAutoRotate = function() {
+            app.getControlsManager().setAutoRotate(false);
+            alert('已关闭自动旋转');
+        };
+        
+        window.rotateToAngle = function(degrees) {
+            app.getControlsManager().setAutoRotate(false);
+            const radians = degrees * Math.PI / 180;
+            app.getModelManager().setRotation(radians);
+            alert(`已旋转到 ${degrees}°`);
+        };
+        
+        // 示例3: 调整相机
+        window.adjustCamera = function(delta) {
+            app.getSceneManager().adjustCameraDistance(delta);
+        };
+        
+        window.resetCamera = function() {
+            const sceneManager = app.getSceneManager();
+            sceneManager.cameraDistance = 6;
+            sceneManager.camera.position.z = 6;
+            alert('相机距离已重置');
+        };
+        
+        // 示例4: 动画控制
+        window.animateFlip = async function() {
+            app.getControlsManager().setAutoRotate(false);
+            
+            const target = Math.PI;
+            let current = 0;
+            const step = Math.PI / 60; // 60帧完成
+            
+            const interval = setInterval(() => {
+                current += step;
+                app.getModelManager().setRotation(current);
+                
+                if (current >= target) {
+                    clearInterval(interval);
+                    alert('翻转动画完成！');
+                }
+            }, 16); // 约60fps
+        };
+        
+        window.animateSpin = function() {
+            app.getControlsManager().setAutoRotate(false);
+            
+            const startRotation = app.getModelManager().getRotationY();
+            const target = startRotation + Math.PI * 2; // 旋转一圈
+            let current = startRotation;
+            const step = Math.PI * 2 / 120; // 120帧完成
+            
+            const interval = setInterval(() => {
+                current += step;
+                app.getModelManager().setRotation(current);
+                
+                if (current >= target) {
+                    clearInterval(interval);
+                    alert('旋转一圈完成！');
+                }
+            }, 16);
+        };
+        
+        window.animateZoom = function() {
+            const sceneManager = app.getSceneManager();
+            const originalDistance = sceneManager.cameraDistance;
+            const targetDistance = originalDistance - 4;
+            let current = originalDistance;
+            const step = 0.1;
+            let zoomingIn = true;
+            
+            const interval = setInterval(() => {
+                if (zoomingIn) {
+                    current -= step;
+                    if (current <= targetDistance) {
+                        zoomingIn = false;
+                    }
+                } else {
+                    current += step;
+                    if (current >= originalDistance) {
+                        clearInterval(interval);
+                        alert('缩放动画完成！');
+                        return;
+                    }
+                }
+                
+                sceneManager.cameraDistance = current;
+                sceneManager.camera.position.z = current;
+            }, 16);
+        };
+        
+        console.log('示例页面已加载，可以调用各种API函数');
+        console.log('可用的全局函数:', {
+            createCardFromURLs: 'async function',
+            enableAutoRotate: 'function',
+            disableAutoRotate: 'function',
+            rotateToAngle: 'function(degrees)',
+            adjustCamera: 'function(delta)',
+            resetCamera: 'function',
+            animateFlip: 'function',
+            animateSpin: 'function',
+            animateZoom: 'function'
+        });
+    </script>
+</body>
+</html>
+

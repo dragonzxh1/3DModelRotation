@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>清除缓存并重新加载</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            text-align: center;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; margin-bottom: 20px; }
+        p { color: #666; line-height: 1.6; margin: 15px 0; }
+        button {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover { background: #c82333; }
+        .success { background: #28a745; }
+        .success:hover { background: #218838; }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+            border: 1px solid #bee5eb;
+        }
+        code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 清除缓存并重新加载</h1>
+        
+        <div class="info">
+            <strong>遇到模块加载错误？</strong><br>
+            点击下面的按钮清除所有缓存并强制重新加载页面
+        </div>
+        
+        <p>这将清除：</p>
+        <ul style="text-align: left; display: inline-block;">
+            <li>浏览器HTTP缓存</li>
+            <li>Service Workers</li>
+            <li>IndexedDB</li>
+            <li>本地存储和会话存储</li>
+        </ul>
+        
+        <button onclick="clearCacheAndReload()">🗑️ 清除缓存并重新加载</button>
+        <button class="success" onclick="location.href='/'">✅ 直接前往主页</button>
+        <button class="success" onclick="location.href='/tests/diagnostic.html'">🔍 前往诊断页面</button>
+        
+        <div id="status" style="margin-top: 20px; color: #28a745; font-weight: bold;"></div>
+    </div>
+
+    <script>
+        async function clearCacheAndReload() {
+            const status = document.getElementById('status');
+            status.textContent = '正在清除缓存...';
+            
+            try {
+                // 清除所有缓存
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    await Promise.all(cacheNames.map(name => caches.delete(name)));
+                    console.log('✅ 已清除所有缓存存储');
+                }
+                
+                // 注销所有 Service Workers
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    await Promise.all(registrations.map(reg => reg.unregister()));
+                    console.log('✅ 已注销所有 Service Workers');
+                }
+                
+                // 清除 IndexedDB
+                if ('indexedDB' in window) {
+                    const dbs = await indexedDB.databases();
+                    dbs.forEach(db => {
+                        if (db.name) indexedDB.deleteDatabase(db.name);
+                    });
+                    console.log('✅ 已清除 IndexedDB');
+                }
+                
+                // 清除本地存储和会话存储
+                localStorage.clear();
+                sessionStorage.clear();
+                console.log('✅ 已清除本地存储');
+                
+                status.textContent = '✅ 缓存已清除！正在重新加载...';
+                
+                // 延迟后硬刷新页面
+                setTimeout(() => {
+                    location.href = '/?t=' + Date.now();
+                    location.reload(true);
+                }, 1000);
+                
+            } catch (error) {
+                console.error('清除缓存时出错:', error);
+                status.textContent = '❌ 清除缓存时出错，请手动按 Ctrl+Shift+Delete';
+                status.style.color = '#dc3545';
+            }
+        }
+        
+        // 显示快捷键提示
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'R') {
+                e.preventDefault();
+                clearCacheAndReload();
+            }
+        });
+    </script>
+</body>
+</html>
+
