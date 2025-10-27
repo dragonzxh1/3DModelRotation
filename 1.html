@@ -227,6 +227,34 @@
             background: rgba(0, 184, 148, 0.8);
         }
         
+        .control-btn.video-btn {
+            background: rgba(231, 76, 60, 0.6);
+            font-weight: bold;
+        }
+        
+        .control-btn.video-btn:hover:not(:disabled) {
+            background: rgba(231, 76, 60, 0.8);
+        }
+        
+        .control-btn.video-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        
+        .control-btn.video-btn.recording {
+            background: rgba(46, 204, 113, 0.8);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+        
         .instructions {
             background: rgba(255, 255, 255, 0.15);
             color: white;
@@ -312,6 +340,7 @@
                 <div class="controls">
                     <button class="control-btn" id="autoRotateBtn">自动旋转</button>
                     <button class="control-btn" id="manualRotateBtn">手动控制</button>
+                    <button class="control-btn video-btn" id="generateVideoBtn" disabled>🎬 生成视频</button>
                 </div>
             </div>
         </div>
@@ -320,6 +349,7 @@
         <div class="instructions">
             <p>💡 使用说明：上传正面和背面图片，点击"创建3D卡片"按钮生成3D卡片模型。卡片会像真实卡片一样翻转，使用控制按钮切换自动翻转或手动控制模式！</p>
             <p>🖱️ 交互控制：鼠标移动控制卡片翻转，滚轮缩放控制远近（距离范围：2-20）</p>
+            <p>🎬 视频录制：创建3D卡片后，点击"生成视频"按钮即可录制卡片旋转一圈的视频（5秒，自动下载为WebM格式）</p>
         </div>
     </div>
 
@@ -354,6 +384,7 @@
         const uploadBtn = document.getElementById('uploadBtn');
         const autoRotateBtn = document.getElementById('autoRotateBtn');
         const manualRotateBtn = document.getElementById('manualRotateBtn');
+        const generateVideoBtn = document.getElementById('generateVideoBtn');
         const canvas = document.getElementById('threeCanvas');
         
         // 初始化Three.js场景
@@ -589,7 +620,7 @@
                 customBackTexture.wrapT = THREE.RepeatWrapping;
                 
         // 创建圆角遮罩，避免矩形图片在圆角模型上露出黑边
-        const alphaMask = createRoundedCornerMask(0.0);
+        const alphaMask = createRoundedCornerMask(0.03);
                 
                 const matFront = new THREE.MeshStandardMaterial({ 
                     map: customFrontTexture,
@@ -908,6 +939,8 @@
                                     uploadBtn.disabled = false;
                                     uploadBtn.textContent = '创建3D卡片';
                                     previewSection.style.display = 'block';
+                                    // 启用生成视频按钮
+                                    generateVideoBtn.disabled = false;
                                 });
                             }, function(err){
                                 console.error('模型解析失败', err);
@@ -916,6 +949,8 @@
                                     uploadBtn.disabled = false;
                                     uploadBtn.textContent = '创建3D卡片';
                                     previewSection.style.display = 'block';
+                                    // 启用生成视频按钮
+                                    generateVideoBtn.disabled = false;
                                 });
                             });
                         };
@@ -927,6 +962,8 @@
                             uploadBtn.disabled = false;
                             uploadBtn.textContent = '创建3D卡片';
                             previewSection.style.display = 'block';
+                            // 启用生成视频按钮
+                            generateVideoBtn.disabled = false;
                         }, 300);
                     }
                 };
@@ -946,6 +983,143 @@
             isAutoRotating = false;
             manualRotateBtn.classList.add('active');
             autoRotateBtn.classList.remove('active');
+        });
+        
+        // 视频录制功能
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let isRecording = false;
+        
+        generateVideoBtn.addEventListener('click', async function() {
+            if (isRecording) {
+                console.log('正在录制中，请稍候...');
+                return;
+            }
+            
+            try {
+                isRecording = true;
+                recordedChunks = [];
+                
+                // 更新按钮状态
+                generateVideoBtn.textContent = '⏺️ 录制中...';
+                generateVideoBtn.classList.add('recording');
+                generateVideoBtn.disabled = true;
+                
+                // 保存当前状态
+                const wasAutoRotating = isAutoRotating;
+                const originalRotationY = cube ? cube.rotation.y : 0;
+                
+                // 暂时关闭自动旋转，使用手动控制
+                isAutoRotating = false;
+                
+                // 获取canvas流
+                const stream = canvas.captureStream(60); // 60 FPS
+                
+                // 创建MediaRecorder
+                const options = {
+                    mimeType: 'video/webm;codecs=vp9',
+                    videoBitsPerSecond: 5000000 // 5 Mbps
+                };
+                
+                // 如果不支持vp9，尝试vp8
+                if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                    options.mimeType = 'video/webm;codecs=vp8';
+                }
+                
+                mediaRecorder = new MediaRecorder(stream, options);
+                
+                mediaRecorder.ondataavailable = function(event) {
+                    if (event.data.size > 0) {
+                        recordedChunks.push(event.data);
+                    }
+                };
+                
+                mediaRecorder.onstop = function() {
+                    console.log('录制完成，开始处理视频...');
+                    
+                    // 合并视频块
+                    const blob = new Blob(recordedChunks, {
+                        type: 'video/webm'
+                    });
+                    
+                    // 下载视频
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = `3D卡片_${Date.now()}.webm`;
+                    document.body.appendChild(a);
+                    a.click();
+                    
+                    // 清理
+                    setTimeout(() => {
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                    }, 100);
+                    
+                    // 恢复按钮状态
+                    generateVideoBtn.textContent = '🎬 生成视频';
+                    generateVideoBtn.classList.remove('recording');
+                    generateVideoBtn.disabled = false;
+                    isRecording = false;
+                    
+                    // 恢复之前的旋转状态
+                    isAutoRotating = wasAutoRotating;
+                    
+                    // 提示用户
+                    alert('✅ 视频已下载！\n\n📹 格式：WebM（浏览器标准格式）\n💡 如需MP4格式，可使用 CloudConvert、FFmpeg 或 VLC 等工具转换。');
+                    console.log('视频已下载！如需MP4格式，可使用在线工具（如 CloudConvert）或 FFmpeg 转换。');
+                };
+                
+                // 开始录制
+                mediaRecorder.start();
+                console.log('开始录制...');
+                
+                // 执行360度旋转动画（5秒完成一圈）
+                const duration = 5000; // 5秒
+                const startTime = Date.now();
+                const startRotation = originalRotationY;
+                const endRotation = startRotation + Math.PI * 2; // 旋转360度
+                
+                function animateRotation() {
+                    const elapsed = Date.now() - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    
+                    // 使用缓动函数使旋转更平滑
+                    const easeProgress = progress < 0.5 
+                        ? 2 * progress * progress 
+                        : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+                    
+                    if (cube) {
+                        cube.rotation.y = startRotation + (endRotation - startRotation) * easeProgress;
+                    }
+                    
+                    if (progress < 1) {
+                        requestAnimationFrame(animateRotation);
+                    } else {
+                        // 旋转完成，停止录制
+                        console.log('旋转动画完成，停止录制...');
+                        setTimeout(() => {
+                            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                                mediaRecorder.stop();
+                            }
+                        }, 500); // 额外等待0.5秒确保完整录制
+                    }
+                }
+                
+                // 开始旋转动画
+                animateRotation();
+                
+            } catch (error) {
+                console.error('生成视频失败:', error);
+                alert('生成视频失败: ' + error.message);
+                
+                // 恢复按钮状态
+                generateVideoBtn.textContent = '🎬 生成视频';
+                generateVideoBtn.classList.remove('recording');
+                generateVideoBtn.disabled = false;
+                isRecording = false;
+            }
         });
         
         // 鼠标控制

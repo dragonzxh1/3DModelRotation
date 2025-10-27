@@ -113,6 +113,7 @@ npx http-server -p 8000
 2. 选择背面图片
 3. （可选）选择自定义3D模型文件（.glb/.gltf格式）
 4. 点击"创建3D卡片"按钮
+5. 🎬 点击"生成视频"按钮可以录制卡片旋转一圈的视频（5秒，自动下载为WebM格式）
 
 ### 2. 作为模块集成
 
@@ -367,6 +368,47 @@ setTimeout(() => {
     app.getControlsManager().setAutoRotate(false);
 }, 3000);
 ```
+
+## 🎬 视频录制功能
+
+### 功能说明
+
+项目内置了视频录制功能，可以录制3D卡片旋转一圈的视频：
+
+- **录制时长**：5秒（卡片完整旋转360度）
+- **输出格式**：WebM（浏览器原生支持）
+- **视频质量**：60 FPS，5 Mbps码率
+- **自动下载**：录制完成后自动保存到本地
+
+### 使用方法
+
+1. 在界面上创建3D卡片后，"生成视频"按钮会自动启用
+2. 点击"🎬 生成视频"按钮
+3. 等待5秒，卡片会自动旋转一圈
+4. 录制完成后自动下载视频文件
+
+### 格式转换
+
+WebM是浏览器标准视频格式，如需转换为MP4格式，可使用以下工具：
+
+- **在线转换**：[CloudConvert](https://cloudconvert.com/)、[Online-Convert](https://www.online-convert.com/)
+- **桌面软件**：VLC Media Player、HandBrake
+- **命令行工具**：FFmpeg（`ffmpeg -i input.webm output.mp4`）
+
+### 技术实现
+
+- 使用 `canvas.captureStream(60)` 捕获Canvas画面
+- 使用 `MediaRecorder API` 录制视频流
+- 支持VP9/VP8编码（浏览器自动选择）
+- 平滑的缓动动画（EaseInOut）
+
+### 浏览器兼容性
+
+视频录制功能需要浏览器支持 `MediaRecorder API`：
+- ✅ Chrome 47+
+- ✅ Firefox 25+
+- ✅ Edge 79+
+- ⚠️ Safari 14.1+（部分支持）
 
 ## 🌐 浏览器兼容性
 
