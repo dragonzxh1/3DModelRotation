@@ -220,6 +220,43 @@ h1 {
     background: rgba(0, 184, 148, 0.8);
 }
 
+.record-btn {
+    background: #f44336;
+    border: none;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 15px rgba(244, 67, 54, 0.4);
+}
+
+.record-btn:hover:not(:disabled) {
+    background: #d32f2f;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(244, 67, 54, 0.6);
+}
+
+.record-btn:disabled {
+    background: rgba(244, 67, 54, 0.3);
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 6px 25px rgba(76, 175, 80, 0.8);
+    }
+}
+
 .instructions {
     background: rgba(255, 255, 255, 0.15);
     color: white;

@@ -7,6 +7,7 @@ import { SceneManager } from './scene.js';
 import { ModelManager } from './model.js';
 import { ControlsManager } from './controls.js';
 import { UploadManager } from './upload.js';
+import { VideoRecorder } from './video-recorder.js';
 
 class App {
     constructor() {
@@ -14,6 +15,7 @@ class App {
         this.modelManager = null;
         this.controlsManager = null;
         this.uploadManager = null;
+        this.videoRecorder = null;
     }
     
     /**
@@ -28,6 +30,7 @@ class App {
         this.modelManager = new ModelManager(this.sceneManager);
         this.controlsManager = new ControlsManager(this.modelManager, this.sceneManager);
         this.uploadManager = new UploadManager(this.modelManager);
+        this.videoRecorder = new VideoRecorder(this.sceneManager, this.modelManager, this.controlsManager);
         
         // 初始化控制器元素
         this.controlsManager.initElements({
@@ -46,6 +49,16 @@ class App {
             previewSection: document.getElementById('previewSection'),
             uploadBtn: document.getElementById('uploadBtn'),
             uploadForm: document.getElementById('uploadForm')
+        });
+        
+        // 初始化视频录制器元素
+        this.videoRecorder.initElements({
+            recordButton: document.getElementById('recordButton')
+        });
+        
+        // 设置卡片创建完成后启用录制按钮
+        this.uploadManager.setOnCardCreatedCallback(() => {
+            this.videoRecorder.enableRecordButton();
         });
         
         // 创建默认卡片
@@ -69,6 +82,46 @@ class App {
         
         // 渲染场景
         this.sceneManager.render();
+    }
+    
+    /**
+     * 获取场景管理器
+     * @returns {SceneManager}
+     */
+    getSceneManager() {
+        return this.sceneManager;
+    }
+    
+    /**
+     * 获取模型管理器
+     * @returns {ModelManager}
+     */
+    getModelManager() {
+        return this.modelManager;
+    }
+    
+    /**
+     * 获取控制管理器
+     * @returns {ControlsManager}
+     */
+    getControlsManager() {
+        return this.controlsManager;
+    }
+    
+    /**
+     * 获取上传管理器
+     * @returns {UploadManager}
+     */
+    getUploadManager() {
+        return this.uploadManager;
+    }
+    
+    /**
+     * 获取视频录制器
+     * @returns {VideoRecorder}
+     */
+    getVideoRecorder() {
+        return this.videoRecorder;
     }
 }
 

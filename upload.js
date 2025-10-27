@@ -16,6 +16,7 @@ export class UploadManager {
         this.previewSection = null;
         this.uploadBtn = null;
         this.uploadForm = null;
+        this.onCardCreatedCallback = null;
     }
     
     /**
@@ -95,6 +96,11 @@ export class UploadManager {
             
             // 显示预览区域
             toggleElement(this.previewSection, true);
+            
+            // 触发卡片创建成功回调
+            if (this.onCardCreatedCallback) {
+                this.onCardCreatedCallback();
+            }
         } catch (error) {
             console.error('创建3D卡片失败：', error);
             alert('创建3D卡片失败，请重试！');
@@ -119,6 +125,19 @@ export class UploadManager {
         }
         
         await this.modelManager.createTexturedCard(frontImageData, backImageData, modelFile);
+        
+        // 触发卡片创建成功回调
+        if (this.onCardCreatedCallback) {
+            this.onCardCreatedCallback();
+        }
+    }
+    
+    /**
+     * 设置卡片创建完成后的回调函数
+     * @param {Function} callback - 回调函数
+     */
+    setOnCardCreatedCallback(callback) {
+        this.onCardCreatedCallback = callback;
     }
 }
 

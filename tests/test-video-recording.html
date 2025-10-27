@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视频录制功能测试</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .test-section {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .test-section h2 {
+            margin-top: 0;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 10px;
+        }
+        
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .log {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        
+        .log-entry {
+            margin: 5px 0;
+        }
+        
+        .log-success {
+            color: #4CAF50;
+        }
+        
+        .log-error {
+            color: #f44336;
+        }
+        
+        .log-info {
+            color: #2196F3;
+        }
+        
+        code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+    </style>
+    
+    <!-- Import Map -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.module.js",
+            "three/": "https://cdn.jsdelivr.net/npm/three@0.128.0/",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/"
+        }
+    }
+    </script>
+</head>
+<body>
+    <h1>🎬 视频录制功能测试</h1>
+    
+    <div class="test-section">
+        <h2>测试 1: 检查浏览器支持</h2>
+        <p>检查当前浏览器是否支持视频录制功能。</p>
+        <button onclick="testBrowserSupport()">运行测试</button>
+        <div class="log" id="log1"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>测试 2: 创建卡片并启用录制按钮</h2>
+        <p>使用示例图片创建3D卡片，并自动启用录制按钮。</p>
+        <button onclick="testCreateCardAndEnableRecording()">运行测试</button>
+        <div class="log" id="log2"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>测试 3: 录制视频（默认参数）</h2>
+        <p>使用默认参数录制视频：5秒，60 FPS，旋转1圈。</p>
+        <button onclick="testRecordDefault()">运行测试</button>
+        <div class="log" id="log3"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>测试 4: 录制视频（自定义参数）</h2>
+        <p>使用自定义参数录制视频：3秒，30 FPS，旋转0.5圈。</p>
+        <button onclick="testRecordCustom()">运行测试</button>
+        <div class="log" id="log4"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>测试 5: 编程方式录制</h2>
+        <p>演示通过API编程方式录制视频。</p>
+        <button onclick="testProgrammaticRecording()">运行测试</button>
+        <div class="log" id="log5"></div>
+    </div>
+    
+    <script type="module">
+        import app from '../main.js';
+        
+        // 等待应用初始化
+        await new Promise(resolve => {
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', resolve);
+            } else {
+                resolve();
+            }
+        });
+        
+        // 等待一小段时间确保完全初始化
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // 将app暴露给全局以便测试函数使用
+        window.testApp = app;
+        
+        // 辅助函数：添加日志
+        function addLog(logId, message, type = 'info') {
+            const log = document.getElementById(logId);
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        // 辅助函数：清空日志
+        function clearLog(logId) {
+            document.getElementById(logId).innerHTML = '';
+        }
+        
+        // 辅助函数：生成测试图片
+        function generateTestImage(text, color) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            
+            // 背景
+            ctx.fillStyle = color;
+            ctx.fillRect(0, 0, 512, 512);
+            
+            // 文字
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 48px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, 256, 256);
+            
+            return canvas.toDataURL('image/png');
+        }
+        
+        // 测试 1: 浏览器支持检查
+        window.testBrowserSupport = function() {
+            clearLog('log1');
+            addLog('log1', '开始检查浏览器支持...', 'info');
+            
+            const videoRecorder = window.testApp.getVideoRecorder();
+            
+            if (videoRecorder.isSupported()) {
+                addLog('log1', '✓ 浏览器支持视频录制功能', 'success');
+                
+                const mimeType = videoRecorder.getSupportedMimeType();
+                addLog('log1', `支持的MIME类型: ${mimeType}`, 'info');
+                
+                // 检查具体编码支持
+                const vp9 = MediaRecorder.isTypeSupported('video/webm;codecs=vp9');
+                const vp8 = MediaRecorder.isTypeSupported('video/webm;codecs=vp8');
+                
+                addLog('log1', `VP9编码支持: ${vp9 ? '是' : '否'}`, vp9 ? 'success' : 'error');
+                addLog('log1', `VP8编码支持: ${vp8 ? '是' : '否'}`, vp8 ? 'success' : 'error');
+            } else {
+                addLog('log1', '✗ 浏览器不支持视频录制功能', 'error');
+                addLog('log1', '请使用 Chrome、Firefox 或 Edge 浏览器', 'error');
+            }
+        };
+        
+        // 测试 2: 创建卡片并启用录制
+        window.testCreateCardAndEnableRecording = async function() {
+            clearLog('log2');
+            addLog('log2', '开始创建3D卡片...', 'info');
+            
+            try {
+                const frontImage = generateTestImage('正面', '#3498db');
+                const backImage = generateTestImage('背面', '#e74c3c');
+                
+                addLog('log2', '已生成测试图片', 'info');
+                
+                const uploadManager = window.testApp.getUploadManager();
+                await uploadManager.createCard({
+                    frontImageData: frontImage,
+                    backImageData: backImage
+                });
+                
+                addLog('log2', '✓ 3D卡片创建成功', 'success');
+                addLog('log2', '✓ 录制按钮已自动启用', 'success');
+                
+                // 检查按钮状态
+                const recordButton = document.getElementById('recordButton');
+                if (recordButton && !recordButton.disabled) {
+                    addLog('log2', '录制按钮状态: 已启用', 'success');
+                } else {
+                    addLog('log2', '警告: 录制按钮未启用', 'error');
+                }
+            } catch (error) {
+                addLog('log2', `✗ 错误: ${error.message}`, 'error');
+            }
+        };
+        
+        // 测试 3: 默认参数录制
+        window.testRecordDefault = async function() {
+            clearLog('log3');
+            
+            const cube = window.testApp.getModelManager().getCube();
+            if (!cube) {
+                addLog('log3', '请先运行测试2创建3D卡片', 'error');
+                return;
+            }
+            
+            addLog('log3', '开始录制视频（默认参数）...', 'info');
+            addLog('log3', '参数: 5秒, 60 FPS, 旋转1圈', 'info');
+            
+            try {
+                const videoRecorder = window.testApp.getVideoRecorder();
+                await videoRecorder.recordVideo();
+                
+                addLog('log3', '✓ 视频录制完成', 'success');
+                addLog('log3', '✓ 视频已自动下载', 'success');
+            } catch (error) {
+                addLog('log3', `✗ 错误: ${error.message}`, 'error');
+            }
+        };
+        
+        // 测试 4: 自定义参数录制
+        window.testRecordCustom = async function() {
+            clearLog('log4');
+            
+            const cube = window.testApp.getModelManager().getCube();
+            if (!cube) {
+                addLog('log4', '请先运行测试2创建3D卡片', 'error');
+                return;
+            }
+            
+            addLog('log4', '开始录制视频（自定义参数）...', 'info');
+            addLog('log4', '参数: 3秒, 30 FPS, 旋转0.5圈', 'info');
+            
+            try {
+                const videoRecorder = window.testApp.getVideoRecorder();
+                await videoRecorder.recordVideo({
+                    duration: 3000,
+                    fps: 30,
+                    bitrate: 3000000,
+                    rotations: 0.5
+                });
+                
+                addLog('log4', '✓ 视频录制完成', 'success');
+                addLog('log4', '✓ 视频已自动下载', 'success');
+            } catch (error) {
+                addLog('log4', `✗ 错误: ${error.message}`, 'error');
+            }
+        };
+        
+        // 测试 5: 编程方式录制
+        window.testProgrammaticRecording = async function() {
+            clearLog('log5');
+            addLog('log5', '演示完整的编程流程...', 'info');
+            
+            try {
+                // 1. 生成图片
+                addLog('log5', '步骤1: 生成测试图片', 'info');
+                const frontImage = generateTestImage('API测试', '#9b59b6');
+                const backImage = generateTestImage('编程录制', '#f39c12');
+                
+                // 2. 创建卡片
+                addLog('log5', '步骤2: 创建3D卡片', 'info');
+                const uploadManager = window.testApp.getUploadManager();
+                await uploadManager.createCard({
+                    frontImageData: frontImage,
+                    backImageData: backImage
+                });
+                addLog('log5', '✓ 卡片创建成功', 'success');
+                
+                // 3. 等待一小段时间
+                addLog('log5', '步骤3: 等待渲染稳定', 'info');
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // 4. 录制视频
+                addLog('log5', '步骤4: 开始录制视频', 'info');
+                const videoRecorder = window.testApp.getVideoRecorder();
+                await videoRecorder.recordVideo({
+                    duration: 4000,
+                    fps: 60,
+                    bitrate: 4000000,
+                    rotations: 1
+                });
+                
+                addLog('log5', '✓ 完整流程执行成功', 'success');
+                addLog('log5', '✓ 视频已保存到下载文件夹', 'success');
+            } catch (error) {
+                addLog('log5', `✗ 错误: ${error.message}`, 'error');
+                console.error(error);
+            }
+        };
+        
+        // 页面加载完成提示
+        addLog('log1', '测试环境已就绪，点击按钮开始测试', 'success');
+    </script>
+</body>
+</html>
+

@@ -9,6 +9,7 @@
 - [模型管理器 (ModelManager)](#模型管理器-modelmanager)
 - [上传管理器 (UploadManager)](#上传管理器-uploadmanager)
 - [控制管理器 (ControlsManager)](#控制管理器-controlsmanager)
+- [视频录制器 (VideoRecorder)](#视频录制器-videorecorder)
 - [工具函数 (Utils)](#工具函数-utils)
 
 ---
@@ -69,13 +70,15 @@ const uploadManager = app.getUploadManager();
 const controlsManager = app.getControlsManager();
 ```
 
-#### `stop()`
+#### `getVideoRecorder()`
 
-停止动画循环。
+获取视频录制器实例。
+
+**返回值**: `VideoRecorder`
 
 **示例**:
 ```javascript
-app.stop();
+const videoRecorder = app.getVideoRecorder();
 ```
 
 ---
@@ -361,6 +364,112 @@ const isAuto = controlsManager.isAutoRotate();
 
 ---
 
+## 视频录制器 (VideoRecorder)
+
+管理3D卡片旋转视频的录制和导出。
+
+### 方法
+
+#### `recordVideo(options)`
+
+录制3D卡片旋转视频。
+
+**参数**:
+- `options` (Object, 可选) - 录制选项
+  - `duration` (number) - 录制时长（毫秒），默认5000
+  - `fps` (number) - 帧率，默认60
+  - `bitrate` (number) - 码率（bps），默认5000000
+  - `rotations` (number) - 旋转圈数，默认1
+
+**返回值**: `Promise<void>`
+
+**示例**:
+```javascript
+// 使用默认参数（5秒，60FPS，旋转1圈）
+await videoRecorder.recordVideo();
+
+// 自定义参数
+await videoRecorder.recordVideo({
+    duration: 10000,  // 10秒
+    fps: 30,          // 30帧
+    bitrate: 3000000, // 3 Mbps
+    rotations: 2      // 旋转2圈
+});
+```
+
+**说明**:
+- 录制期间会自动停止自动旋转，录制完成后恢复
+- 使用EaseInOut缓动函数使旋转更加平滑
+- 视频自动下载为WebM格式
+- 支持VP9/VP8编码（自动选择最佳可用编码）
+
+#### `enableRecordButton()`
+
+启用录制按钮（通常在创建卡片后调用）。
+
+**示例**:
+```javascript
+videoRecorder.enableRecordButton();
+```
+
+#### `disableRecordButton()`
+
+禁用录制按钮。
+
+**示例**:
+```javascript
+videoRecorder.disableRecordButton();
+```
+
+#### `isSupported()`
+
+检查浏览器是否支持视频录制。
+
+**返回值**: `boolean`
+
+**示例**:
+```javascript
+if (videoRecorder.isSupported()) {
+    console.log('支持视频录制');
+} else {
+    console.log('不支持视频录制');
+}
+```
+
+#### `getSupportedMimeType()`
+
+获取支持的视频MIME类型。
+
+**返回值**: `string`
+
+**示例**:
+```javascript
+const mimeType = videoRecorder.getSupportedMimeType();
+console.log('支持的格式:', mimeType);
+```
+
+#### `getRecordingState()`
+
+获取当前录制状态。
+
+**返回值**: `boolean`
+
+**示例**:
+```javascript
+const isRecording = videoRecorder.getRecordingState();
+```
+
+#### `stopRecording()`
+
+停止当前录制。
+
+**示例**:
+```javascript
+videoRecorder.stopRecording();
+```
+
+---
+
 ## 工具函数 (Utils)
 
 提供通用辅助函数。
@@ -551,7 +660,33 @@ async function createAndControl() {
 }
 ```
 
-### 示例4: 错误处理
+### 示例4: 视频录制
+
+```javascript
+import app from './main.js';
+
+async function createCardAndRecord(frontData, backData) {
+    // 创建卡片
+    await app.getUploadManager().createCard({
+        frontImageData: frontData,
+        backImageData: backData
+    });
+    
+    // 启用录制按钮
+    app.getVideoRecorder().enableRecordButton();
+    
+    // 自动开始录制（可选）
+    await app.getVideoRecorder().recordVideo({
+        duration: 5000,  // 5秒
+        fps: 60,         // 60帧
+        bitrate: 5000000 // 5 Mbps
+    });
+    
+    console.log('视频已保存');
+}
+```
+
+### 示例5: 错误处理
 
 ```javascript
 import app from './main.js';
@@ -570,7 +705,7 @@ async function createCardSafely(frontData, backData) {
 }
 ```
 
-### 示例5: 自定义圆角遮罩
+### 示例6: 自定义圆角遮罩
 
 如果需要调整圆角大小，可以修改 `model.js` 中的圆角半径：
 
