@@ -257,17 +257,17 @@ export class ModelManager {
                 scene.remove(gltf.scene);
                 gltf.scene.position.sub(rotatedCenter);
                 
-                // 为模型中的所有网格启用阴影和高质量材质
+                // 为模型中的所有网格启用阴影和保留原始材质
                 gltf.scene.traverse((child) => {
                     if (child.isMesh) {
                         child.castShadow = true;
                         child.receiveShadow = true;
                         
-                        // 升级所有材质为MeshStandardMaterial以获得更好的光照效果
+                        // 保留并增强原始材质
                         if (child.material) {
                             const oldMaterial = child.material;
                             
-                            // 如果是BasicMaterial，升级为StandardMaterial
+                            // 如果是BasicMaterial，升级为StandardMaterial（保留所有原始属性）
                             if (oldMaterial.isMeshBasicMaterial) {
                                 child.material = new THREE.MeshStandardMaterial({
                                     map: oldMaterial.map,
@@ -279,12 +279,50 @@ export class ModelManager {
                                     roughness: 0.3,
                                     envMapIntensity: 0.8
                                 });
-                            } 
-                            // 如果已经是StandardMaterial，确保有正确的光照参数
+                            }
+                            // 如果是PhongMaterial，转换为StandardMaterial（保留所有纹理和颜色）
+                            else if (oldMaterial.isMeshPhongMaterial) {
+                                child.material = new THREE.MeshStandardMaterial({
+                                    map: oldMaterial.map,
+                                    normalMap: oldMaterial.normalMap,
+                                    bumpMap: oldMaterial.bumpMap,
+                                    displacementMap: oldMaterial.displacementMap,
+                                    roughnessMap: oldMaterial.roughnessMap,
+                                    metalnessMap: oldMaterial.metalnessMap,
+                                    aoMap: oldMaterial.aoMap,
+                                    emissiveMap: oldMaterial.emissiveMap,
+                                    emissive: oldMaterial.emissive,
+                                    color: oldMaterial.color,
+                                    transparent: oldMaterial.transparent,
+                                    opacity: oldMaterial.opacity,
+                                    side: oldMaterial.side,
+                                    metalness: 0.15,
+                                    roughness: 0.3,
+                                    envMapIntensity: 0.8
+                                });
+                            }
+                            // 如果是LambertMaterial，转换为StandardMaterial
+                            else if (oldMaterial.isMeshLambertMaterial) {
+                                child.material = new THREE.MeshStandardMaterial({
+                                    map: oldMaterial.map,
+                                    normalMap: oldMaterial.normalMap,
+                                    emissiveMap: oldMaterial.emissiveMap,
+                                    emissive: oldMaterial.emissive,
+                                    color: oldMaterial.color,
+                                    transparent: oldMaterial.transparent,
+                                    opacity: oldMaterial.opacity,
+                                    side: oldMaterial.side,
+                                    metalness: 0.15,
+                                    roughness: 0.3,
+                                    envMapIntensity: 0.8
+                                });
+                            }
+                            // 如果已经是StandardMaterial，保留原始材质参数（不强制覆盖）
                             else if (oldMaterial.isMeshStandardMaterial) {
-                                oldMaterial.metalness = oldMaterial.metalness !== undefined ? oldMaterial.metalness : 0.15;
-                                oldMaterial.roughness = oldMaterial.roughness !== undefined ? oldMaterial.roughness : 0.3;
-                                oldMaterial.envMapIntensity = 0.8;
+                                // 只在未定义的情况下设置默认值，否则保留模型自带的值
+                                if (oldMaterial.metalness === undefined) oldMaterial.metalness = 0.15;
+                                if (oldMaterial.roughness === undefined) oldMaterial.roughness = 0.3;
+                                if (oldMaterial.envMapIntensity === undefined) oldMaterial.envMapIntensity = 0.8;
                                 oldMaterial.needsUpdate = true;
                             }
                         }
